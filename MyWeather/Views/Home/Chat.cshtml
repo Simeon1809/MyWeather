@@ -1,0 +1,116 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<style>
+    #chartdiv {
+        width: 100%;
+        height: 500px;
+    }
+</style>
+
+
+<div class="container">
+    <div class="inner-wrap" style="width: 100%; margin-bottom: 20px;">
+        <div class="card" style="border: 1px solid #ccc; border-radius: 5px;">
+            <div class="card-header" style="background-color: #f0f0f0; padding: 10px;">
+                <h2 style="margin: 0;">Chart of Lagos Temperature</h2>
+            </div>
+            <div id="chartMessage" style="display: none; padding: 10px;">
+                <h4 style="margin: 0; color: #ff0000;">There are no weather data. <a  asp-area="" asp-controller="Home" asp-action="Index">Click here to download</a> </h4>
+            </div>
+        </div>
+    </div>
+
+    <div id="barChatData" style="border: 1px solid #ccc; border-radius: 5px; padding: 20px;">
+        <!-- Bar chart will be rendered here -->
+        <canvas id="barChartCanvas" width="400" height="400"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@section Scripts {
+
+    <script>
+
+        function LoadData(url) {
+            return jQuery.ajax({
+                type: "GET",
+                url: url,
+            });
+        }
+
+        $(document).ready(function () {
+
+            $("#loader_bg").show();
+            $("#app-loader").show();
+
+            var url = '@Url.Action("LoadChatData", "Home")';
+
+            $.when(LoadData(url)).then(function (res) {
+                var data = res.data;
+
+
+                if (data.length === 0) {
+                    $("#chartMessage").show();
+                    $("#barChatData").hide();
+                    $("#loader_bg").hide();
+                    $("#app-loader").hide();
+                    return;
+                }
+
+                // Further processing if needed
+
+                console.log(data);
+
+                $("#loader_bg").hide();
+                $("#app-loader").hide();
+
+
+              
+
+                // Extracting labels and values from the data
+                var labels = data.map(function (item) {
+                    return item.date;
+                });
+
+                var values = data.map(function (item) {
+                    return item.value;
+                });
+
+                // Render the bar chart
+                var ctx = document.getElementById('barChartCanvas').getContext('2d');
+                var barChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Temperature (°C)',
+                            data: values,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.error('Error loading data:', errorThrown);
+                // Handle error here
+            });
+        });
+
+    </script>
+
+}
+
+
+
